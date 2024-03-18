@@ -38,20 +38,50 @@ function vultr_MetaData()
 
 function vultr_ConfigOptions()
 {
-    return array(
+    // Fetch VPS plans from Vultr API
+    $apiKey = ''; // Load your API key from module configuration
+    $plans = getVultrPlans($apiKey);
+
+    $configarray = array(
         "API Key" => array("Type" => "text", "Size" => "50", "Description" => "Enter your Vultr API Key"),
+        "VPS Plan" => array("Type" => "dropdown", "Options" => $plans, "Description" => "Select VPS plan")
     );
+    return $configarray;
 }
 
+
+// Helper function to fetch VPS plans from Vultr API
+function getVultrPlans($apiKey)
+{
+    $url = 'https://api.vultr.com/v2/plans';
+    $headers = array(
+        'Authorization: Bearer ' . $apiKey,
+    );
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    $plans = array();
+    $decodedResponse = json_decode($response, true);
+    foreach ($decodedResponse['plans'] as $plan) {
+        $plans[$plan['id']] = $plan['name'];
+    }
+    return $plans;
+}
 function vultr_CreateAccount($params)
 {
     // Fetch necessary parameters
     $apiKey = $params['configoption1'];
-    $planID = $params['configoption2']; // You need to implement logic to retrieve plan ID based on product configuration
+    $planID = $params['configoption2']; // Get selected VPS plan ID
     $hostname = $params['customfields']['Hostname'];
+    $region = $params['configoption3']; // Get selected region
 
     // Make API call to Vultr to create the VPS instance
-    $instanceData = createVultrInstance($apiKey, $planID, $hostname);
+    $instanceData = createVultrInstance($apiKey, $planID, $hostname, $region);
 
     // Save instance data to WHMCS database
     saveInstanceData($instanceData, $params['serviceid']);
