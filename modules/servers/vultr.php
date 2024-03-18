@@ -246,12 +246,12 @@ function reinstallOperatingSystem($apiKey, $instanceID, $osID)
 }
 
 // Helper function to make API call to create Vultr instance
-function createVultrInstance($apiKey, $planID, $hostname)
+function createVultrInstance($apiKey, $planID, $hostname, $region)
 {
     $url = 'https://api.vultr.com/v2/instances';
 
     $data = array(
-        'region' => 'us-east',
+        'region' => $region,
         'plan' => $planID,
         'label' => $hostname
         // Add more parameters as needed
